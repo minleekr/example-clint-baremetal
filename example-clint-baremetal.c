@@ -161,7 +161,15 @@ int main() {
     /* write msip and display message that s/w handler was hit */
     write_word(MSIP_BASE_ADDR(read_csr(mhartid)), 0x1);
 
-   exit (0);
+    while (1) {
+        // Do Something and,
+
+        // go to sleep
+        asm volatile ("wfi");
+    }
+
+    // just for compile, but it should not return!!
+    return 0;
 }
 
 /* External Interrupt ID #11 - handles all global interrupts */

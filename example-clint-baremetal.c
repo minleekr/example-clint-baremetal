@@ -70,6 +70,10 @@
 #define MSIP_BASE_ADDR(hartid)                          (CLINT_BASE_ADDR + METAL_RISCV_CLINT0_MSIP_BASE + (hartid * MSIP_PER_HART_OFFSET))
 #define MTIMECMP_BASE_ADDR(hartid)                      (CLINT_BASE_ADDR + METAL_RISCV_CLINT0_MTIMECMP_BASE + (hartid * MTIMECMP_PER_HART_OFFSET))
 #define MTIME_BASE_ADDR                                 (CLINT_BASE_ADDR + METAL_RISCV_CLINT0_MTIME)
+#else
+
+ #error "This design does not have a CLINT...\n");
+
 #endif
 
 #define NUM_TICKS_ONE_S                         RTC_FREQ            // it takes this many ticks of mtime for 1s to elapse
@@ -112,9 +116,6 @@ void __attribute__((weak, interrupt)) external_handler (void);
 void __attribute__((weak, interrupt)) default_vector_handler (void);
 void __attribute__((weak)) default_exception_handler(void);
 
-uint32_t plic_interrupt_lines[METAL_MAX_GLOBAL_EXT_INTERRUPTS];
-uint32_t clint_interrupt_lines[__riscv_xlen];
-uint32_t timer_isr_counter = 0;
 
 /* Main - Setup CLINT interrupt handling and describe how to trigger interrupt */
 int main() {
@@ -131,35 +132,25 @@ int main() {
     mtvec_base = (uintptr_t)&__mtvec_clint_vector_table;
     write_csr (mtvec, (mtvec_base | mode));
 
-#if CLINT_PRESENT
-    /* Get numeric list of CLINT interrupt lines and enable those at the CPU */
-    for (i = 0; i < METAL_MAX_LOCAL_EXT_INTERRUPTS; i++) {
-        clint_interrupt_lines[i] = __metal_driver_sifive_local_external_interrupts0_interrupt_lines(NULL, i);
-
-        /* enable */
-        interrupt_local_enable(clint_interrupt_lines[i]);
-    }
-#else
-#error "This design does not have a CLINT...Exiting.\n");
-    exit(0x77);
-#endif
-
+    /* If you want to use the software interrupt, please uncomment it */
     /* enable software interrupts */
-    interrupt_software_enable ();
+    // interrupt_software_enable ();
+    /* trigger sw interrupt */
+    //write_word(MSIP_BASE_ADDR(read_csr(mhartid)), 0x1);
 
-    /* enable timer interrupts */
-    SET_TIMER_INTERVAL_MS(DEMO_TIMER_INTERVAL);
-    interrupt_timer_enable();
+    /* If you want to use the cpu timer interrupt, please uncomment it */
+    //SET_TIMER_INTERVAL_MS(DEMO_TIMER_INTERVAL);
+    //interrupt_timer_enable();
+
+    /* If you want to use the local interrupt, please uncomment it */
+    /* local irq0 to irq15 */
+    //interrupt_local_enable(16); // local irq0
+    // ...
+    //interrupt_local_enable(31); // local irq15
+
 
     /* Write mstatus.mie = 1 to enable all machine interrupts */
     interrupt_global_enable();
-
-    /* Allow timer interrupt to fire before we continue, running at ~5s intervals */
-    while (!timer_isr_counter);
-    interrupt_timer_disable();
-
-    /* write msip and display message that s/w handler was hit */
-    write_word(MSIP_BASE_ADDR(read_csr(mhartid)), 0x1);
 
     while (1) {
         // Do Something and,
@@ -182,23 +173,19 @@ void __attribute__((weak, interrupt)) external_handler (void) {
      */
 }
 
+/* External Interrupt ID #3 You need to activate it on handlers.S */
 void __attribute__((weak, interrupt)) software_handler (void) {
-
-    uintptr_t mip, code = MCAUSE_CODE(read_csr(mcause));
-    uintptr_t int_bit = read_csr(mip);
 
     /* Clear Software Pending Bit which clears mip.msip bit */
     write_word(MSIP_BASE_ADDR(read_csr(mhartid)), 0x0);
+
+    /* Do Something after clear SW irq pending*/
 }
 
+/* External Interrupt ID #7 You need to activate it on handlers.S */
 void __attribute__((weak, interrupt)) timer_handler (void) {
 
-    uintptr_t code = MCAUSE_CODE(read_csr(mcause));
-    uintptr_t mtime, mip;
-    uintptr_t int_bit = read_csr(mip);
-
-    /* set our next interval */
-    SET_TIMER_INTERVAL_MS(DEMO_TIMER_INTERVAL);
+    /* Just Do Something when the timer is expired*/
 }
 
 void __attribute__((weak, interrupt)) default_vector_handler (void) {
@@ -206,7 +193,7 @@ void __attribute__((weak, interrupt)) default_vector_handler (void) {
     while (1);
 }
 
-void __attribute__((weak)) default_exception_handler(void) {
+void __attribute__((weak, interrupt)) default_exception_handler(void) {
     while (1);
 }
 

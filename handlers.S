@@ -22,6 +22,70 @@
 .balign 4, 0
 .global external_handler
 
+.weak lc0_handler
+.balign 4, 0
+.global lc0_handler
+
+.weak lc1_handler
+.balign 4, 0
+.global lc1_handler
+
+.weak lc2_handler
+.balign 4, 0
+.global lc2_handler
+
+.weak lc3_handler
+.balign 4, 0
+.global lc3_handler
+
+.weak lc4_handler
+.balign 4, 0
+.global lc4_handler
+
+.weak lc5_handler
+.balign 4, 0
+.global lc5_handler
+
+.weak lc6_handler
+.balign 4, 0
+.global lc6_handler
+
+.weak lc7_handler
+.balign 4, 0
+.global lc7_handler
+
+.weak lc8_handler
+.balign 4, 0
+.global lc8_handler
+
+.weak lc9_handler
+.balign 4, 0
+.global lc9_handler
+
+.weak lc10_handler
+.balign 4, 0
+.global lc10_handler
+
+.weak lc11_handler
+.balign 4, 0
+.global lc11_handler
+
+.weak lc12_handler
+.balign 4, 0
+.global lc12_handler
+
+.weak lc13_handler
+.balign 4, 0
+.global lc13_handler
+
+.weak lc14_handler
+.balign 4, 0
+.global lc14_handler
+
+.weak lc15_handler
+.balign 4, 0
+.global lc15_handler
+
 .option norvc
 .weak __mtvec_clint_vector_table
 #if __riscv_xlen == 32

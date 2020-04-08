@@ -188,6 +188,102 @@ void __attribute__((weak, interrupt)) timer_handler (void) {
     /* Just Do Something when the timer is expired*/
 }
 
+/* local irq0 */
+void __attribute__((weak, interrupt)) lc0_handler (void) {
+    /* Add functionality if desired */
+
+}
+
+/* local irq1 */
+void __attribute__((weak, interrupt)) lc1_handler (void) {
+    /* Add functionality if desired */
+
+}
+
+/* local irq2 */
+void __attribute__((weak, interrupt)) lc2_handler (void) {
+    /* Add functionality if desired */
+
+}
+
+/* local irq3 */
+void __attribute__((weak, interrupt)) lc3_handler (void) {
+    /* Add functionality if desired */
+
+}
+
+/* local irq4 */
+void __attribute__((weak, interrupt)) lc4_handler (void) {
+    /* Add functionality if desired */
+
+}
+
+/* local irq5 */
+void __attribute__((weak, interrupt)) lc5_handler (void) {
+    /* Add functionality if desired */
+
+}
+
+/* local irq6 */
+void __attribute__((weak, interrupt)) lc6_handler (void) {
+    /* Add functionality if desired */
+
+}
+
+/* local irq7 */
+void __attribute__((weak, interrupt)) lc7_handler (void) {
+    /* Add functionality if desired */
+
+}
+
+/* local irq8 */
+void __attribute__((weak, interrupt)) lc8_handler (void) {
+    /* Add functionality if desired */
+
+}
+
+/* local irq9 */
+void __attribute__((weak, interrupt)) lc9_handler (void) {
+    /* Add functionality if desired */
+
+}
+
+/* local irq10 */
+void __attribute__((weak, interrupt)) lc10_handler (void) {
+    /* Add functionality if desired */
+
+}
+
+/* local irq11 */
+void __attribute__((weak, interrupt)) lc11_handler (void) {
+    /* Add functionality if desired */
+
+}
+
+/* local irq12 */
+void __attribute__((weak, interrupt)) lc12_handler (void) {
+    /* Add functionality if desired */
+
+}
+
+/* local irq13 */
+void __attribute__((weak, interrupt)) lc13_handler (void) {
+    /* Add functionality if desired */
+
+}
+
+/* local irq14 */
+void __attribute__((weak, interrupt)) lc14_handler (void) {
+    /* Add functionality if desired */
+
+}
+
+/* local irq15 */
+void __attribute__((weak, interrupt)) lc15_handler (void) {
+    /* Add functionality if desired */
+
+}
+
 void __attribute__((weak, interrupt)) default_vector_handler (void) {
     /* Add functionality if desired */
     while (1);

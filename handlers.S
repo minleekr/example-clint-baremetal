@@ -39,7 +39,7 @@ IRQ_1:
 IRQ_2:
         j default_vector_handler
 IRQ_3:
-        j software_handler
+        j default_vector_handler /* software_handler */
 IRQ_4:
         j default_vector_handler
 IRQ_5:
@@ -47,15 +47,15 @@ IRQ_5:
 IRQ_6:
         j default_vector_handler
 IRQ_7:
-        j timer_handler
+        j default_vector_handler /* timer_handler */
 IRQ_8:
         j default_vector_handler
 IRQ_9:
-		j default_vector_handler
+	j default_vector_handler
 IRQ_10:
         j default_vector_handler
 IRQ_11:
-        j external_handler
+        j default_vector_handler /* external_handler */
 IRQ_12:
         j default_vector_handler
 IRQ_13:
@@ -95,36 +95,4 @@ IRQ_29:
 IRQ_30:
         j default_vector_handler
 IRQ_31:
-        j default_vector_handler
-IRQ_32:
-        j default_vector_handler
-IRQ_33:
-        j default_vector_handler
-IRQ_34:
-        j default_vector_handler
-IRQ_35:
-        j default_vector_handler
-IRQ_36:
-        j default_vector_handler
-IRQ_37:
-        j default_vector_handler
-IRQ_38:
-        j default_vector_handler
-IRQ_39:
-        j default_vector_handler
-IRQ_40:
-        j default_vector_handler
-IRQ_41:
-        j default_vector_handler
-IRQ_42:
-        j default_vector_handler
-IRQ_43:
-        j default_vector_handler
-IRQ_44:
-        j default_vector_handler
-IRQ_45:
-        j default_vector_handler
-IRQ_46:
-        j default_vector_handler
-IRQ_47:
         j default_vector_handler

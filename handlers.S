@@ -73,13 +73,13 @@ IRQ_18:
 IRQ_19:
         j default_vector_handler
 IRQ_20:
-        j button_handler
+        j default_vector_handler
 IRQ_21:
-        j button_handler
+        j default_vector_handler
 IRQ_22:
-        j button_handler
+        j default_vector_handler
 IRQ_23:
-        j button_handler
+        j default_vector_handler
 IRQ_24:
         j default_vector_handler
 IRQ_25:

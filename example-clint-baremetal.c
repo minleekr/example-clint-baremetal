@@ -46,22 +46,13 @@
 #define OUTPUT                  0x101    /* something other than 0 or 1 */
 #define RTC_FREQ                32768
 
-#if __riscv_xlen == 32
 #define MCAUSE_INTR                         0x80000000UL
 #define MCAUSE_CAUSE                        0x000003FFUL
-#else
-#define MCAUSE_INTR                         0x8000000000000000UL
-#define MCAUSE_CAUSE                        0x00000000000003FFUL
-#endif
 #define MCAUSE_CODE(cause)                  (cause & MCAUSE_CAUSE)
 
 /* Compile time options to determine which interrupt modules we have */
 #define CLINT_PRESENT                           (METAL_MAX_CLINT_INTERRUPTS > 0)
-#define CLIC_PRESENT                            (METAL_MAX_CLIC_INTERRUPTS > 0)
 #define PLIC_PRESENT                            (METAL_MAX_PLIC_INTERRUPTS > 0)
-#ifdef METAL_SIFIVE_GPIO0
-#define GPIO_PRESENT                            TRUE
-#endif
 
 /* Interrupt Specific defines - used for mtvec.mode field, which is bit[0] for
  * designs with CLINT, or [1:0] for designs with a CLIC */
@@ -81,13 +72,6 @@
 #define MTIME_BASE_ADDR                                 (CLINT_BASE_ADDR + METAL_RISCV_CLINT0_MTIME)
 #endif
 
-#if CLIC_PRESENT
-#define CLIC_BASE_ADDR                                  METAL_SIFIVE_CLIC0_0_BASE_ADDRESS
-#define MSIP_BASE_ADDR(hartid)                          (CLIC_BASE_ADDR + METAL_SIFIVE_CLIC0_MSIP_BASE + (hartid * MSIP_PER_HART_OFFSET))
-#define MTIMECMP_BASE_ADDR(hartid)                      (CLIC_BASE_ADDR + METAL_SIFIVE_CLIC0_MTIMECMP_BASE + (hartid * MTIMECMP_PER_HART_OFFSET))
-#define MTIME_BASE_ADDR                                 (CLIC_BASE_ADDR + METAL_SIFIVE_CLIC0_MTIME)
-#endif
-
 #define NUM_TICKS_ONE_S                         RTC_FREQ            // it takes this many ticks of mtime for 1s to elapse
 #define NUM_TICKS_ONE_MS                        (RTC_FREQ/1000)     // it takes this many ticks of mtime for 1ms to elapse
 #define DEMO_TIMER_INTERVAL                     5000                // 5s timer interval
@@ -104,33 +88,6 @@ void interrupt_external_enable (void);
 void interrupt_external_disable (void);
 void interrupt_local_enable (int id);
 void interrupt_local_disable (int id);
-void gpio_enable_io (uint32_t pin, uint32_t input_or_output, uint32_t enable_interrupt);
-
-/* GPIO module and offsets - used to configure and enable GPIO as interrupt inputs,
- * for example, like buttons and switches on Arty FPGA board
- */
-#if GPIO_PRESENT
-#define GPIO_BASE_ADDR              METAL_SIFIVE_GPIO0_0_BASE_ADDRESS
-#define GPIO_VALUE_ADDR             (GPIO_BASE_ADDR + METAL_SIFIVE_GPIO0_VALUE) /* pin value */
-#define GPIO_INPUT_EN_ADDR          (GPIO_BASE_ADDR + METAL_SIFIVE_GPIO0_INPUT_EN) /* pin input enable */
-#define GPIO_OUTPUT_EN_ADDR         (GPIO_BASE_ADDR + METAL_SIFIVE_GPIO0_OUTPUT_EN) /* pin output enable */
-#define GPIO_PORT_ADDR              (GPIO_BASE_ADDR + METAL_SIFIVE_GPIO0_PORT) /* output value */
-#define GPIO_PUE_ADDR               (GPIO_BASE_ADDR + METAL_SIFIVE_GPIO0_PUE) /* pull up enable */
-#define GPIO_DS_ADDR                (GPIO_BASE_ADDR + METAL_SIFIVE_GPIO0_DS)  /* drive strength */
-#define GPIO_RISE_IE_ADDR           (GPIO_BASE_ADDR + METAL_SIFIVE_GPIO0_RISE_IE)
-#define GPIO_RISE_IP_ADDR           (GPIO_BASE_ADDR + METAL_SIFIVE_GPIO0_RISE_IP)
-#define GPIO_FALL_IE_ADDR           (GPIO_BASE_ADDR + METAL_SIFIVE_GPIO0_FALL_IE)
-#define GPIO_FALL_IP_ADDR           (GPIO_BASE_ADDR + METAL_SIFIVE_GPIO0_FALL_IP)
-#define GPIO_HIGH_IE_ADDR           (GPIO_BASE_ADDR + METAL_SIFIVE_GPIO0_HIGH_IE)
-#define GPIO_HIGH_IP_ADDR           (GPIO_BASE_ADDR + METAL_SIFIVE_GPIO0_HIGH_IP)
-#define GPIO_LOW_IE_ADDR            (GPIO_BASE_ADDR + METAL_SIFIVE_GPIO0_LOW_IE)
-#define GPIO_LOW_IP_ADDR            (GPIO_BASE_ADDR + METAL_SIFIVE_GPIO0_LOW_IP)
-#define GPIO_IOF_EN_ADDR            (GPIO_BASE_ADDR + METAL_SIFIVE_GPIO0_IOF_EN)
-#define GPIO_IOF_SEL_ADDR           (GPIO_BASE_ADDR + METAL_SIFIVE_GPIO0_IOF_SEL)
-#define GPIO_OUT_XOR_ADDR           (GPIO_BASE_ADDR + METAL_SIFIVE_GPIO0_IOF_SEL)
-
-#define MAX_GPIO_PINS               16
-#endif
 
 /* Defines to access CSR registers within C code */
 #define read_csr(reg) ({ unsigned long __tmp; \
@@ -157,16 +114,13 @@ void __attribute__((weak)) default_exception_handler(void);
 
 uint32_t plic_interrupt_lines[METAL_MAX_GLOBAL_EXT_INTERRUPTS];
 uint32_t clint_interrupt_lines[__riscv_xlen];
-uint32_t gpio_lines[METAL_MAX_GPIO_INTERRUPTS];
 uint32_t timer_isr_counter = 0;
-uint32_t button_isr_counter = 0;
 
 /* Main - Setup CLINT interrupt handling and describe how to trigger interrupt */
 int main() {
 
     uint32_t i, mode = MTVEC_MODE_CLINT_VECTORED;
     uintptr_t mtvec_base;
-    struct metal_gpio *ggpio;
 
     /* Write mstatus.mie = 0 to disable all machine interrupts prior to setup */
     interrupt_global_disable();
@@ -176,37 +130,6 @@ int main() {
      * mtvec.mode field is bit[0] for designs with CLINT, or [1:0] using CLIC */
     mtvec_base = (uintptr_t)&__mtvec_clint_vector_table;
     write_csr (mtvec, (mtvec_base | mode));
-
-#if GPIO_PRESENT
-
-    /* Here we enable Arty Buttons which are GPIOs to fire interrupt lines
-     */
-#if __MEE_DT_MAX_GPIOS > 1
-#error "Make sure to select the proper GPIO module for this demo!"
-#else
-    ggpio = metal_gpio_get_device(0); /* assume only a single GPIO0 module exists */
-    if (ggpio == NULL) {
-        printf ("GPIO device returned an error - check setup.  Exiting\n");
-        exit (0xF5);
-    }
-#endif
-
-    /* Enable each standard Arty GPIO button as input with interrupt enabled
-     * see __metal_driver_sifive_gpio_button_pin() for reference.  The
-     * standard cores use GPIO 4-7 for this.
-     */
-    gpio_enable_io(4, INPUT, ENABLE);
-    gpio_enable_io(5, INPUT, ENABLE);
-    gpio_enable_io(6, INPUT, ENABLE);
-    gpio_enable_io(7, INPUT, ENABLE);
-  
-    for (i = 0; i < METAL_MAX_GPIO_INTERRUPTS; i++) {
-
-        /* Get the actual interrupt line number and populate our array */
-        gpio_lines[i] = __metal_driver_sifive_gpio0_interrupt_lines(ggpio, i);
-    }
-
-#endif  // #if GPIO_PRESENT
 
 #if CLINT_PRESENT
     /* Get numeric list of CLINT interrupt lines and enable those at the CPU */
@@ -232,70 +155,13 @@ int main() {
     interrupt_global_enable();
 
     /* Allow timer interrupt to fire before we continue, running at ~5s intervals */
-    printf ("Waiting for 5s Timer interrupt to fire...\n");
     while (!timer_isr_counter);
     interrupt_timer_disable();
 
     /* write msip and display message that s/w handler was hit */
-    fflush(stdout);
-    printf ("\nSetting software interrupt...\n");
     write_word(MSIP_BASE_ADDR(read_csr(mhartid)), 0x1);
 
-    /* Tell user to push a button to demonstrate gpio line assertion */
-    printf ("Waiting for any 4 button presses...\n\n");
-    fflush(stdout);
-    while (button_isr_counter < 4){};
-
-    printf ("Thanks!  Now exiting...\n");
-
    exit (0);
-}
-
-/* Enable or disable a GPIO for input or output */
-void gpio_enable_io(uint32_t pin, uint32_t input_or_output, uint32_t enable_interrupt) {
-
-    uint32_t io_bit, gpio_in, gpio_out;
-
-    if (pin > MAX_GPIO_PINS) {
-        return;
-    }
-    else {
-        io_bit = (1 << pin);
-    }
-
-    /* read current input & output enable values */
-    gpio_in = read_word(GPIO_INPUT_EN_ADDR);
-    gpio_out = read_word(GPIO_OUTPUT_EN_ADDR);
-
-    /* Setup I/O */
-    if (input_or_output == INPUT) {
-
-        /* Disable output, enable input */
-        write_word(GPIO_OUTPUT_EN_ADDR, (gpio_out & ~io_bit));
-        write_word(GPIO_INPUT_EN_ADDR, (gpio_in | io_bit));
-
-    } else if (input_or_output == OUTPUT) {
-
-        /* Disable input, enable output */
-        write_word(GPIO_INPUT_EN_ADDR, (gpio_in & ~io_bit));
-        write_word(GPIO_OUTPUT_EN_ADDR, (gpio_out | io_bit));
-
-    } else if (input_or_output == DISABLE) {
-
-        /* Turn off both input and output */
-        write_word(GPIO_INPUT_EN_ADDR, (gpio_in & ~io_bit));
-        write_word(GPIO_OUTPUT_EN_ADDR, (gpio_out & ~io_bit));
-    }
-
-    /* Enable Interrupts, which are level-high sensitive */
-    if (enable_interrupt == ENABLE) {
-        /* Enable interrupt */
-        write_word(GPIO_HIGH_IE_ADDR, ENABLE);
-    }
-    else {
-        /* Disable Interrupt */
-        write_word(GPIO_HIGH_IE_ADDR, DISABLE);
-    }
 }
 
 /* External Interrupt ID #11 - handles all global interrupts */
@@ -313,8 +179,6 @@ void __attribute__((weak, interrupt)) software_handler (void) {
     uintptr_t mip, code = MCAUSE_CODE(read_csr(mcause));
     uintptr_t int_bit = read_csr(mip);
 
-    printf ("Software Handler!  Interrupt ID: %d\n", code);
-
     /* Clear Software Pending Bit which clears mip.msip bit */
     write_word(MSIP_BASE_ADDR(read_csr(mhartid)), 0x0);
 }
@@ -325,24 +189,8 @@ void __attribute__((weak, interrupt)) timer_handler (void) {
     uintptr_t mtime, mip;
     uintptr_t int_bit = read_csr(mip);
 
-    printf ("Timer Handler! Interrupt ID: %d, Count: %d\n", code, ++timer_isr_counter);
-
     /* set our next interval */
     SET_TIMER_INTERVAL_MS(DEMO_TIMER_INTERVAL);
-}
-
-void __attribute__((weak, interrupt)) button_handler (void) {
-
-    uintptr_t mip, code = MCAUSE_CODE(read_csr(mcause));
-    uintptr_t int_bit = ((1 << code) & read_csr(mip));
-
-    printf ("Button Handler! Interrupt ID: %d\n", code);
-
-    /* wait for user to release button */
-    while ((read_csr(mip) & int_bit));
-
-    /* increment counter */
-    button_isr_counter++;
 }
 
 void __attribute__((weak, interrupt)) default_vector_handler (void) {
@@ -351,19 +199,7 @@ void __attribute__((weak, interrupt)) default_vector_handler (void) {
 }
 
 void __attribute__((weak)) default_exception_handler(void) {
-
-    /* Read mcause to understand the exception type */
-    uintptr_t mcause = read_csr(mcause);
-    uintptr_t mepc = read_csr(mepc);
-    uintptr_t mtval = read_csr(mtval);
-    uintptr_t code = MCAUSE_CODE(mcause);
-
-    printf ("Exception Hit! mcause: 0x%08x, mepc: 0x%08x, mtval: 0x%08x\n", mcause, mepc, mtval);
-    printf ("Mcause Exception Code: 0x%08x\n", code);
-    printf("Now Exiting...\n");
-
-    /* Exit here using non-zero return code */
-    exit (0xEE);
+    while (1);
 }
 
 void interrupt_global_enable (void) {

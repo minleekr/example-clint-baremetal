@@ -116,6 +116,14 @@ void __attribute__((weak, interrupt)) external_handler (void);
 void __attribute__((weak, interrupt)) default_vector_handler (void);
 void __attribute__((weak)) default_exception_handler(void);
 
+/* user interrupt handler */
+void __attribute__((weak, interrupt)) lc0_handler (void);
+
+/* you can activate what you want to test  */
+#define ACTIVATE_SOFTWARE_INTERRUPT         0
+#define ACTIVATE_TIMER_INTERRUPT            0
+#define ACTIVATE_EXTERNAL_INTERRUPT         0
+#define ACTIVATE_LOCAL_EXT_INTERRUPT        1
 
 /* Main - Setup CLINT interrupt handling and describe how to trigger interrupt */
 int main() {
@@ -132,22 +140,38 @@ int main() {
     mtvec_base = (uintptr_t)&__mtvec_clint_vector_table;
     write_csr (mtvec, (mtvec_base | mode));
 
-    /* If you want to use the software interrupt, please uncomment it */
+#if ACTIVATE_SOFTWARE_INTERRUPT
     /* enable software interrupts */
-    // interrupt_software_enable ();
+    interrupt_software_enable ();
     /* trigger sw interrupt */
-    //write_word(MSIP_BASE_ADDR(read_csr(mhartid)), 0x1);
+    write_word(MSIP_BASE_ADDR(read_csr(mhartid)), 0x1);
+#endif
 
-    /* If you want to use the cpu timer interrupt, please uncomment it */
-    //SET_TIMER_INTERVAL_MS(DEMO_TIMER_INTERVAL);
-    //interrupt_timer_enable();
+#if ACTIVATE_TIMER_INTERRUPT
+    SET_TIMER_INTERVAL_MS(DEMO_TIMER_INTERVAL);
+    interrupt_timer_enable();
+#endif
 
+#if ACTIVATE_EXTERNAL_INTERRUPT
+    external_handler ();
+#endif
+
+#if ACTIVATE_LOCAL_EXT_INTERRUPT
     /* If you want to use the local interrupt, please uncomment it */
     /* local irq0 to irq15 */
     //interrupt_local_enable(16); // local irq0
     // ...
     //interrupt_local_enable(31); // local irq15
 
+    /* local_ext_irq0 */
+    interrupt_local_enable(16);
+
+    /* local_ext_irq1 */
+    //interrupt_local_enable(17);
+
+    /* local_ext_irq15 */
+    //interrupt_local_enable(31);
+#endif
 
     /* Write mstatus.mie = 1 to enable all machine interrupts */
     interrupt_global_enable();

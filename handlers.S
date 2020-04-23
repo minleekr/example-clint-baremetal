@@ -103,7 +103,7 @@ IRQ_1:
 IRQ_2:
         j default_vector_handler
 IRQ_3:
-        j default_vector_handler /* software_handler */
+        j software_handler /* software_handler */
 IRQ_4:
         j default_vector_handler
 IRQ_5:
@@ -111,7 +111,7 @@ IRQ_5:
 IRQ_6:
         j default_vector_handler
 IRQ_7:
-        j default_vector_handler /* timer_handler */
+        j timer_handler /* timer_handler */
 IRQ_8:
         j default_vector_handler
 IRQ_9:
@@ -119,7 +119,7 @@ IRQ_9:
 IRQ_10:
         j default_vector_handler
 IRQ_11:
-        j default_vector_handler /* external_handler */
+        j external_handler /* external_handler */
 IRQ_12:
         j default_vector_handler
 IRQ_13:
@@ -129,34 +129,34 @@ IRQ_14:
 IRQ_15:
         j default_vector_handler
 IRQ_16:
-        j default_vector_handler
+        j lc0_handler /* local_ext_irq0  */
 IRQ_17:
-        j default_vector_handler
+        j lc1_handler /* local_ext_irq1  */
 IRQ_18:
-        j default_vector_handler
+        j lc2_handler /* local_ext_irq2  */
 IRQ_19:
-        j default_vector_handler
+        j lc3_handler /* local_ext_irq3  */
 IRQ_20:
-        j default_vector_handler
+        j lc4_handler /* local_ext_irq4  */
 IRQ_21:
-        j default_vector_handler
+        j lc5_handler /* local_ext_irq5  */
 IRQ_22:
-        j default_vector_handler
+        j lc6_handler /* local_ext_irq6  */
 IRQ_23:
-        j default_vector_handler
+        j lc7_handler /* local_ext_irq7  */
 IRQ_24:
-        j default_vector_handler
+        j lc8_handler /* local_ext_irq8  */
 IRQ_25:
-        j default_vector_handler
+        j lc9_handler /* local_ext_irq9  */
 IRQ_26:
-        j default_vector_handler
+        j lc10_handler /* local_ext_irq10  */
 IRQ_27:
-        j default_vector_handler
+        j lc11_handler /* local_ext_irq11  */
 IRQ_28:
-        j default_vector_handler
+        j lc12_handler /* local_ext_irq12  */
 IRQ_29:
-        j default_vector_handler
+        j lc13_handler /* local_ext_irq13  */
 IRQ_30:
-        j default_vector_handler
+        j lc14_handler /* local_ext_irq14  */
 IRQ_31:
-        j default_vector_handler
+        j lc15_handler /* local_ext_irq15  */

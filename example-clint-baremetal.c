@@ -101,12 +101,12 @@ void interrupt_local_disable (int id);
 #define write_csr(reg, val) ({ \
   asm volatile ("csrw " #reg ", %0" :: "rK"(val)); })
 
-#define write_dword(addr, data)                 ((*(uint64_t *)(addr)) = data)
-#define read_dword(addr)                        (*(uint64_t *)(addr))
-#define write_word(addr, data)                  ((*(uint32_t *)(addr)) = data)
-#define read_word(addr)                         (*(uint32_t *)(addr))
-#define write_byte(addr, data)                  ((*(uint8_t *)(addr)) = data)
-#define read_byte(addr)                         (*(uint8_t *)(addr))
+#define write_dword(addr, data)                 ((*(volatile uint64_t *)(addr)) = data)
+#define read_dword(addr)                        (*(volatile uint64_t *)(addr))
+#define write_word(addr, data)                  ((*(volatile uint32_t *)(addr)) = data)
+#define read_word(addr)                         (*(volatile uint32_t *)(addr))
+#define write_byte(addr, data)                  ((*(volatile uint8_t *)(addr)) = data)
+#define read_byte(addr)                         (*(volatile uint8_t *)(addr))
 
 /* Globals */
 void __attribute__((weak, interrupt)) __mtvec_clint_vector_table(void);
